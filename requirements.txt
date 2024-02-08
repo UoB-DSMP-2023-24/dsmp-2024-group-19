@@ -1,0 +1,8 @@
+jupyter
+pandas
+numpy
+matplotlib
+pyarrow
+scipy
+scikit-learn
+statsmodels

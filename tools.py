@@ -8,13 +8,22 @@ data_folder = "Data"
 lob_subfolder = "LOBs"
 tapes_subfolder = "Tapes"
 
-def get_LOBs(n = 0, min_n = 0) -> list[pd.DataFrame]:
-    """ prototype: use with caution"""
+def get_LOBs(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
+    """ 
+    Retrieves limit order book (LOB) data.
+    
+    Args:
+        n (int): Number of LOBs to retrieve. Default is 0.
+        min_n (int): Minimum index of LOBs to retrieve. Default is 0.
+        
+    Returns:
+        list[pd.DataFrame]: List of DataFrames containing the LOB data.
+    """
     assert n >= min_n
     assert min_n >= 0
     assert n < 125
 
-    LOB_filenames = os.listdir(data_folder + '\\' + lob_subfolder)
+    LOB_filenames = os.listdir(os.path.join(data_folder, lob_subfolder))
 
     raw_LOBs = []
 
@@ -25,7 +34,7 @@ def get_LOBs(n = 0, min_n = 0) -> list[pd.DataFrame]:
         else:
             date = filename[10:20]
             
-            with open(data_folder + "\\" + lob_subfolder + "\\" + filename, 'r') as f:
+            with open(os.path.join(data_folder, lob_subfolder, filename), 'r') as f:
                 lob_raw = f.readlines()
 
             lob_list = []
@@ -59,10 +68,10 @@ def get_LOBs(n = 0, min_n = 0) -> list[pd.DataFrame]:
                 4 : "low_ask"
             }
 
-            df.rename(columns = column_mapping, inplace = True)
+            df.rename(columns=column_mapping, inplace=True)
 
             df['Date'] = pd.to_datetime(date)
-            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit = "s")
+            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit="s")
             df['combined_time'] = df['Date'] + df['Seconds'] + pd.Timedelta(hours=8)
             df.index = df['combined_time']
             df = df.drop(['Date', 'Seconds', 'combined_time'], axis=1)
@@ -76,9 +85,17 @@ def get_LOBs(n = 0, min_n = 0) -> list[pd.DataFrame]:
 
     return raw_LOBs
 
-def get_Tapes(n = 125) -> list[pd.DataFrame]:
+def get_Tapes(n: int = 125) -> list[pd.DataFrame]:
+    """
+    Retrieves tape data.
     
-    Tapes_filenames = os.listdir(data_folder + '\\' + tapes_subfolder)
+    Args:
+        n (int): Number of tape data to retrieve. Default is 125.
+        
+    Returns:
+        list[pd.DataFrame]: List of DataFrames containing the tape data.
+    """
+    Tapes_filenames = os.listdir(os.path.join(data_folder, tapes_subfolder))
 
     raw_tapes = []
     for filename in Tapes_filenames:
@@ -88,19 +105,17 @@ def get_Tapes(n = 125) -> list[pd.DataFrame]:
         else:
             date = filename[10:20]
             
-            df = pd.read_csv(data_folder + "\\" + tapes_subfolder + "\\" + filename, header = None)
+            df = pd.read_csv(os.path.join(data_folder, tapes_subfolder, filename), header=None)
             column_mapping = {
-                0 : "Seconds",
-                1 : "Price",
-                2 : "Volume",
+                0: "Seconds",
+                1: "Price",
+                2: "Volume",
             }
 
-            df.rename(columns = column_mapping, inplace = True)
+            df.rename(columns=column_mapping, inplace=True)
 
             df['Date'] = pd.to_datetime(date)
-
-            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit = "s")
-
+            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit="s")
             df['combined_time'] = df['Date'] + df['Seconds'] + pd.Timedelta(hours=8)
 
             df.index = df['combined_time']

@@ -85,20 +85,28 @@ def get_LOBs(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
 
     return raw_LOBs
 
-def get_Tapes(n: int = 125) -> list[pd.DataFrame]:
+def get_Tapes(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
     """
-    Retrieves tape data.
-    
+    Retrieves a specified number of Tape dataframes.
+
     Args:
-        n (int): Number of tape data to retrieve. Default is 125.
-        
+        n (int, optional): Number of Tape dataframes to retrieve. Defaults to 0.
+        min_n (int, optional): Minimum index from which to retrieve Tape dataframes. Defaults to 0.
+
     Returns:
-        list[pd.DataFrame]: List of DataFrames containing the tape data.
+        list[pd.DataFrame]: A list of Tape dataframes.
+
+    Raises:
+        AssertionError: If n is less than min_n, min_n is less than 0, or n is greater than or equal to 125.
     """
+    assert n >= min_n
+    assert min_n >= 0
+    assert n < 125
+
     Tapes_filenames = os.listdir(os.path.join(data_folder, tapes_subfolder))
 
     raw_tapes = []
-    for filename in Tapes_filenames:
+    for filename in Tapes_filenames[min_n:n+1]:
         print(f"Opening {filename}")
         if filename[:10] != "UoB_Set01_":
             print("Invalid Filename:", filename)

@@ -184,3 +184,51 @@ def clean_lob(df):
         prev_ask = row["LOB"][1][1]
 
     return df
+
+def resample_LOB(df):
+    """
+    Takes Clean LOB as input
+    Turns data into the 1hz domain
+    """
+    df_bids_asks = df[["Incoming bid", "Incoming ask", "Outgoing bid", "Outgoing ask"]]
+    df_bids_asks = df_bids_asks.map(lambda x: x[1:-1].replace(",","") if isinstance(x, str) else "")
+    df_bids_asks = df_bids_asks.resample("1s").sum()
+
+    df_AB = df[["alpha", "beta"]]
+    df_AB = df_AB.resample("1s").mean() # taking the average alpha and beta value over the second
+
+    df_prices = df[["mid_price", "low_ask", "high_bid"]]
+    df_prices = df_prices.resample("1s").last()
+
+    return pd.concat([df_bids_asks, df_AB, df_prices], axis = 1)
+
+def resample_Tapes(df):
+    """
+    Can take get tapes output as an input
+    Turns data into the 1hz domain
+    """
+    df["Price x Volume"] = df["Price"] * df["Volume"]
+    resampled_df = df.resample("1s").sum()
+    resampled_df["Tapes Price"] = resampled_df["Price x Volume"] / resampled_df["Volume"]
+    resampled_df["Last Tapes Price"] = resampled_df["Tapes Price"].fillna(method = "ffill")
+    resampled_df.drop(["Price","Price x Volume"], axis = 1, inplace = True)
+
+    return resampled_df
+
+def read_merged_data(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
+    assert n >= min_n
+    assert min_n >= 0
+    assert n < 125
+
+    output = []
+
+    for i in range(min_n, n + 1):
+        LOB = pd.read_csv(f"Processed_Data/Clean_LOB/Clean_LOB_{i}.csv", index_col=0, parse_dates=True)
+        Tapes = get_Tapes(i,i)[0]
+
+        LOB_resample = resample_LOB(LOB)
+        Tapes_resample = resample_Tapes(Tapes)
+
+        output.append(pd.concat([LOB_resample, Tapes_resample], axis = 1))
+
+    return output

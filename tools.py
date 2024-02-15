@@ -138,9 +138,28 @@ def get_Tapes(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
     return raw_tapes
 
 def list_diff(list1, list2):
+    """
+    Returns the elements in list1 that are not present in list2.
+
+    Parameters:
+    - list1 (list): The first list.
+    - list2 (list): The second list.
+
+    Returns:
+    - list: A list containing elements from list1 that are not present in list2.
+    """
     return [x for x in list1 if x not in list2]
 
 def clean_lob(df):
+    """
+    Cleans the Limit Order Book (LOB) data.
+
+    Parameters:
+    - df (DataFrame): DataFrame containing the LOB data.
+
+    Returns:
+    - DataFrame: Cleaned DataFrame.
+    """
     b_val = 1
     c = 0
 
@@ -187,8 +206,13 @@ def clean_lob(df):
 
 def resample_LOB(df):
     """
-    Takes Clean LOB as input
-    Turns data into the 1hz domain
+    Resamples the cleaned LOB data into the 1hz domain.
+
+    Parameters:
+    - df (DataFrame): DataFrame containing the cleaned LOB data.
+
+    Returns:
+    - DataFrame: Resampled DataFrame.
     """
     df_bids_asks = df[["Incoming bid", "Incoming ask", "Outgoing bid", "Outgoing ask"]]
     df_bids_asks = df_bids_asks.map(lambda x: x[1:-1].replace(",","") if isinstance(x, str) else "")
@@ -204,8 +228,13 @@ def resample_LOB(df):
 
 def resample_Tapes(df):
     """
-    Can take get tapes output as an input
-    Turns data into the 1hz domain
+    Resamples the tapes data into the 1hz domain.
+
+    Parameters:
+    - df (DataFrame): DataFrame containing the tapes data.
+
+    Returns:
+    - DataFrame: Resampled DataFrame.
     """
     df["Price x Volume"] = df["Price"] * df["Volume"]
     resampled_df = df.resample("1s").sum()
@@ -216,6 +245,16 @@ def resample_Tapes(df):
     return resampled_df
 
 def read_merged_data(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
+    """
+    Reads and merges the resampled LOB and tapes data.
+
+    Parameters:
+    - n (int): Number of files to read and merge.
+    - min_n (int): Minimum file number.
+
+    Returns:
+    - list: List of merged DataFrames.
+    """
     assert n >= min_n
     assert min_n >= 0
     assert n < 125

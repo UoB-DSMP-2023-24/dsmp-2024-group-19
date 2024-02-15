@@ -8,23 +8,55 @@ data_folder = "Data"
 lob_subfolder = "LOBs"
 tapes_subfolder = "Tapes"
 
-def get_LOBs(n = 125) -> list[pd.DataFrame]:
-    """ prototype: use with caution"""
-    LOB_filenames = os.listdir(data_folder + '\\' + lob_subfolder)
+def get_LOBs(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
+    """ 
+    Retrieves limit order book (LOB) data.
+    
+    Args:
+        n (int): Number of LOBs to retrieve. Default is 0.
+        min_n (int): Minimum index of LOBs to retrieve. Default is 0.
+        
+    Returns:
+        list[pd.DataFrame]: List of DataFrames containing the LOB data.
+    """
+    assert n >= min_n
+    assert min_n >= 0
+    assert n < 125
+
+    LOB_filenames = os.listdir(os.path.join(data_folder, lob_subfolder))
 
     raw_LOBs = []
 
-    for filename in LOB_filenames:
+    for filename in LOB_filenames[min_n:n+1]:
         print(f"Opening {filename}")
         if filename[:10] != "UoB_Set01_":
             print("Invalid Filename:", filename)
         else:
             date = filename[10:20]
             
-            with open(data_folder + "\\" + lob_subfolder + "\\" + filename, 'r') as f:
+            with open(os.path.join(data_folder, lob_subfolder, filename), 'r') as f:
                 lob_raw = f.readlines()
 
-            lob_list = [ast.literal_eval(a.replace("Exch0", "'Exch0'")) for a in lob_raw]
+            lob_list = []
+            for row in lob_raw:
+                parsed_row = ast.literal_eval(row.replace("Exch0", "'Exch0'"))
+                
+                high_bid = None
+                low_ask = None
+                
+                if len(parsed_row[2][0][1]) > 0:
+                    high_bid = -np.inf
+                    for bid, vol in parsed_row[2][0][1]:
+                        if bid > high_bid:
+                            high_bid = bid
+
+                if len(parsed_row[2][1][1]) > 0:
+                    low_ask = np.inf
+                    for ask, vol in parsed_row[2][1][1]:
+                        if ask < low_ask:
+                            low_ask = ask
+
+                lob_list.append(parsed_row + [high_bid, low_ask])
 
             df = pd.DataFrame(lob_list)
 
@@ -32,19 +64,19 @@ def get_LOBs(n = 125) -> list[pd.DataFrame]:
                 0 : "Seconds",
                 1 : "Exchange",
                 2 : "LOB",
+                3 : "high_bid",
+                4 : "low_ask"
             }
 
-            df.rename(columns = column_mapping, inplace = True)
+            df.rename(columns=column_mapping, inplace=True)
 
             df['Date'] = pd.to_datetime(date)
-
-            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit = "s")
-
+            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit="s")
             df['combined_time'] = df['Date'] + df['Seconds'] + pd.Timedelta(hours=8)
-
             df.index = df['combined_time']
-
             df = df.drop(['Date', 'Seconds', 'combined_time'], axis=1)
+
+            df["mid_price"] = (df["high_bid"] + df["low_ask"]) / 2
 
             raw_LOBs.append(df)
 
@@ -53,32 +85,45 @@ def get_LOBs(n = 125) -> list[pd.DataFrame]:
 
     return raw_LOBs
 
-def get_Tapes(n = 125) -> list[pd.DataFrame]:
-    
-    Tapes_filenames = os.listdir(data_folder + '\\' + tapes_subfolder)
+def get_Tapes(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
+    """
+    Retrieves a specified number of Tape dataframes.
+
+    Args:
+        n (int, optional): Number of Tape dataframes to retrieve. Defaults to 0.
+        min_n (int, optional): Minimum index from which to retrieve Tape dataframes. Defaults to 0.
+
+    Returns:
+        list[pd.DataFrame]: A list of Tape dataframes.
+
+    Raises:
+        AssertionError: If n is less than min_n, min_n is less than 0, or n is greater than or equal to 125.
+    """
+    assert n >= min_n
+    assert min_n >= 0
+    assert n < 125
+
+    Tapes_filenames = os.listdir(os.path.join(data_folder, tapes_subfolder))
 
     raw_tapes = []
-    for filename in Tapes_filenames:
+    for filename in Tapes_filenames[min_n:n+1]:
         print(f"Opening {filename}")
         if filename[:10] != "UoB_Set01_":
             print("Invalid Filename:", filename)
         else:
             date = filename[10:20]
             
-            df = pd.read_csv(data_folder + "\\" + tapes_subfolder + "\\" + filename, header = None)
-
+            df = pd.read_csv(os.path.join(data_folder, tapes_subfolder, filename), header=None)
             column_mapping = {
-                0 : "Seconds",
-                1 : "Price",
-                2 : "Volume",
+                0: "Seconds",
+                1: "Price",
+                2: "Volume",
             }
 
-            df.rename(columns = column_mapping, inplace = True)
+            df.rename(columns=column_mapping, inplace=True)
 
             df['Date'] = pd.to_datetime(date)
-
-            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit = "s")
-
+            df['Seconds'] = pd.to_timedelta(df["Seconds"], unit="s")
             df['combined_time'] = df['Date'] + df['Seconds'] + pd.Timedelta(hours=8)
 
             df.index = df['combined_time']
@@ -91,3 +136,51 @@ def get_Tapes(n = 125) -> list[pd.DataFrame]:
                 return raw_tapes
 
     return raw_tapes
+
+def list_diff(list1, list2):
+    return [x for x in list1 if x not in list2]
+
+def clean_lob(df):
+    b_val = 1
+    c = 0
+
+    for i, row in df.iterrows():
+        print(i, end = "\r")
+        if c == 0:
+            pass
+        else:
+            bid = row["LOB"][0][1]
+            ask = row["LOB"][1][1]
+
+            df.at[i, "Incoming bid"] = str(list_diff(bid, prev_bid))
+            df.at[i, "Incoming ask"] = str(list_diff(ask, prev_ask))
+
+            df.at[i, "Outgoing bid"] = str(list_diff(prev_bid, bid))
+            df.at[i, "Outgoing ask"] = str(list_diff(prev_ask, ask))
+
+            df.at[i, "Number_bids"] = len(row["LOB"][0][1])
+            df.at[i, "Number_asks"] = len(row["LOB"][1][1])
+
+            if ~np.isnan(row["mid_price"]):
+                asks = row["LOB"][1][1]
+                bids = row["LOB"][0][1]
+                mid = row["mid_price"]
+
+                alpha = 0
+                for a, num in asks:
+                    assert a > mid
+                    alpha += num/((a - mid) + b_val)
+
+                beta = 0
+                for b, num in bids:
+                    assert mid > b
+                    beta += num /((mid - b) + b_val)
+
+                df.at[i, "alpha"] = alpha
+                df.at[i, "beta"] = beta
+            
+        c += 1
+        prev_bid = row["LOB"][0][1]
+        prev_ask = row["LOB"][1][1]
+
+    return df

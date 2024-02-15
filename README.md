@@ -17,6 +17,14 @@ Planner: https://docs.google.com/spreadsheets/d/1NDi2MzhVfda5drRDP5jcF_mk6-M7fUV
 
 *Note: Need to make planner private*
 
+# Structure
+
+Store raw LOB data within Data/LOB
+
+Store raw Tapes data within Data/Tapes
+
+Store processed LOB data into Processed_Data/Clean_LOB
+
 # Setting up the environment
 
 Open the command prompt and navigate to the local github's directory, this is my example:

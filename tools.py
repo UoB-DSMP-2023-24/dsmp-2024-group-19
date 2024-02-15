@@ -136,3 +136,51 @@ def get_Tapes(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
                 return raw_tapes
 
     return raw_tapes
+
+def list_diff(list1, list2):
+    return [x for x in list1 if x not in list2]
+
+def clean_lob(df):
+    b_val = 1
+    c = 0
+
+    for i, row in df.iterrows():
+        print(i, end = "\r")
+        if c == 0:
+            pass
+        else:
+            bid = row["LOB"][0][1]
+            ask = row["LOB"][1][1]
+
+            df.at[i, "Incoming bid"] = str(list_diff(bid, prev_bid))
+            df.at[i, "Incoming ask"] = str(list_diff(ask, prev_ask))
+
+            df.at[i, "Outgoing bid"] = str(list_diff(prev_bid, bid))
+            df.at[i, "Outgoing ask"] = str(list_diff(prev_ask, ask))
+
+            df.at[i, "Number_bids"] = len(row["LOB"][0][1])
+            df.at[i, "Number_asks"] = len(row["LOB"][1][1])
+
+            if ~np.isnan(row["mid_price"]):
+                asks = row["LOB"][1][1]
+                bids = row["LOB"][0][1]
+                mid = row["mid_price"]
+
+                alpha = 0
+                for a, num in asks:
+                    assert a > mid
+                    alpha += num/((a - mid) + b_val)
+
+                beta = 0
+                for b, num in bids:
+                    assert mid > b
+                    beta += num /((mid - b) + b_val)
+
+                df.at[i, "alpha"] = alpha
+                df.at[i, "beta"] = beta
+            
+        c += 1
+        prev_bid = row["LOB"][0][1]
+        prev_ask = row["LOB"][1][1]
+
+    return df

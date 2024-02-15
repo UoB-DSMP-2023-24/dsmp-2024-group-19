@@ -215,7 +215,7 @@ def resample_LOB(df):
     - DataFrame: Resampled DataFrame.
     """
     df_bids_asks = df[["Incoming bid", "Incoming ask", "Outgoing bid", "Outgoing ask"]]
-    df_bids_asks = df_bids_asks.map(lambda x: x[1:-1].replace(",","") if isinstance(x, str) else "")
+    df_bids_asks = df_bids_asks.applymap(lambda x: x[1:-1].replace(",","") if isinstance(x, str) else "")
     df_bids_asks = df_bids_asks.resample("1s").sum()
 
     df_AB = df[["alpha", "beta"]]

@@ -221,8 +221,9 @@ def resample_LOB(df):
     df_AB = df[["alpha", "beta"]]
     df_AB = df_AB.resample("1s").mean() # taking the average alpha and beta value over the second
 
-    df_prices = df[["mid_price", "low_ask", "high_bid"]]
+    df_prices = df[["LOB","mid_price", "low_ask", "high_bid"]]
     df_prices = df_prices.resample("1s").last()
+    #df_prices["LOB"] = df_prices["LOB"].fillna("[]").apply(ast.literal_eval)
 
     return pd.concat([df_bids_asks, df_AB, df_prices], axis = 1)
 

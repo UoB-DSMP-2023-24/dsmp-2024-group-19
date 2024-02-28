@@ -240,7 +240,7 @@ def resample_Tapes(df):
     df["Price x Volume"] = df["Price"] * df["Volume"]
     resampled_df = df.resample("1s").sum()
     resampled_df["Tapes Price"] = resampled_df["Price x Volume"] / resampled_df["Volume"]
-    resampled_df["Last Tapes Price"] = resampled_df["Tapes Price"].fillna(method = "ffill")
+    resampled_df["Last Tapes Price"] = resampled_df["Tapes Price"].ffill()
     resampled_df.drop(["Price","Price x Volume"], axis = 1, inplace = True)
 
     return resampled_df

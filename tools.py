@@ -263,7 +263,7 @@ def read_merged_data(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
     output = []
 
     for i in range(min_n, n + 1):
-        LOB = pd.read_csv(f"Processed_Data/Clean_LOB/Clean_LOB_{i}.csv", index_col=0, parse_dates=True)
+        LOB = pd.read_csv(f"Processed_Data/Clean_LOB/Clean_LOB_{i}.csv", index_col=0, parse_dates=True, engine="pyarrow")
         Tapes = get_Tapes(i,i)[0]
 
         LOB_resample = resample_LOB(LOB)

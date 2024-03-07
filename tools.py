@@ -272,3 +272,9 @@ def read_merged_data(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
         output.append(pd.concat([LOB_resample, Tapes_resample], axis = 1))
 
     return output
+
+def move_to_parent_dir():
+    current_directory = os.getcwd()
+    parent_directory = os.path.dirname(current_directory)
+    os.chdir(parent_directory)
+    print("Working directory:", os.getcwd())

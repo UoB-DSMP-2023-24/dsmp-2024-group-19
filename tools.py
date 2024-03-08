@@ -20,7 +20,7 @@ def get_LOBs(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
         list[pd.DataFrame]: List of DataFrames containing the LOB data.
     """
     assert min_n >= 0
-    assert n < 125 - min_n
+    assert n <= 125 - min_n
 
     LOB_filenames = os.listdir(os.path.join(data_folder, lob_subfolder))
 

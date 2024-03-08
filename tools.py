@@ -19,15 +19,14 @@ def get_LOBs(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
     Returns:
         list[pd.DataFrame]: List of DataFrames containing the LOB data.
     """
-    assert n >= min_n
     assert min_n >= 0
-    assert n < 125
+    assert n < 125 - min_n
 
     LOB_filenames = os.listdir(os.path.join(data_folder, lob_subfolder))
 
     raw_LOBs = []
 
-    for filename in LOB_filenames[min_n:n+1]:
+    for filename in LOB_filenames[min_n:min_n+n]:
         print(f"Opening {filename}")
         if filename[:10] != "UoB_Set01_":
             print("Invalid Filename:", filename)

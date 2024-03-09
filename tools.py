@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import ast
+from scipy.sparse import load_npz
 
 data_folder = "Data"
 lob_subfolder = "LOBs"
@@ -277,3 +278,29 @@ def move_to_parent_dir():
     parent_directory = os.path.dirname(current_directory)
     os.chdir(parent_directory)
     print("Working directory:", os.getcwd())
+
+
+def read_csr(n):
+    filenames = os.listdir("CSR_Data")
+    csr_filenames = [f for f in filenames if "CSR" in f]
+    time_filenames = [f for f in filenames if "Timestamps" in f]
+
+    csr_filenames.sort()
+    time_filenames.sort()
+
+    assert len(csr_filenames) == len(time_filenames)
+
+    data = []
+    for i in range(len(csr_filenames) - (124 - n)):
+        #date = time_filenames[i].split("_")[1]
+        print(i, end="\r")
+        if i == 5:
+            break
+        # Load the CSR matrix from the .npz file
+        lob = pd.DataFrame(load_npz(os.path.join("CSR_Data", csr_filenames[i])).toarray())
+        time = pd.read_csv(os.path.join("CSR_Data", time_filenames[i]), parse_dates=True, header=None)
+        lob.index = time[list(time)[0]]
+        lob.columns = lob.columns + 1
+        
+        data.append(lob)
+    return data

@@ -9,3 +9,4 @@ statsmodels
 keras
 tensorflow
 seaborn
+numba

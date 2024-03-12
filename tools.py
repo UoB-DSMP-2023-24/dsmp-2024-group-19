@@ -101,7 +101,7 @@ def get_Tapes(n: int = 0, min_n: int = 0) -> list[pd.DataFrame]:
     """
     assert n >= min_n
     assert min_n >= 0
-    assert n < 125
+    assert n <= 125
 
     Tapes_filenames = os.listdir(os.path.join(data_folder, tapes_subfolder))
 

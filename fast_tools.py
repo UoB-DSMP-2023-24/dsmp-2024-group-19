@@ -147,11 +147,11 @@ def get_features(lob_data: np.array,
         lob_end = lob_start
         tapes_end = tapes_start
 
-        # get lob slice
+        # get lob end index
         while lob_times[lob_end] < end_time and lob_end < max_lob:       # move lob indicies to end time
             lob_end += 1
         
-        # get tapes slice
+        # get tapes end index
         while tapes[tapes_end][0] < end_time and tapes_end < max_tapes:  # move tapes indicies to end time
             tapes_end += 1
 
@@ -273,15 +273,19 @@ def load_data(time_step_s = 60,
     
     dates = get_dates()
     output_data = []
+    load_times = []
     for i, date in enumerate(dates):
-        s = time.time()
-        lob, lob_time, tapes = readc_day(date)
-        feat_arr, features = get_features(lob, lob_time, tapes, time_step_s, ab_weight, median, cas_cbs_window)
-        e = time.time()
-        
-        output_data.append(feat_arr)
+        if i != 0:
+            load_times.append(e-s)
+            print(f"On day {i+1}/125, estimated time left = {np.median(load_times) * (124 - i):.1f}s\t\t", end = "\r")
+        else:
+            print("Compiling code...")
 
-        print(f"On day {i+1}/125, estimated time left = {(e - s) * (124 - i):.1e}s")
+        s = time.time()
+        lob, lob_time, tapes = readc_day(date) # variable names are reused so only required data is needed
+        feat_arr, features = get_features(lob, lob_time, tapes, time_step_s, ab_weight, median, cas_cbs_window)
+        output_data.append(feat_arr)
+        e = time.time()
 
     return output_data, features
 

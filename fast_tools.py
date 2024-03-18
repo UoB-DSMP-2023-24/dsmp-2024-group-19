@@ -47,6 +47,24 @@ def get_data(min_n = 0, max_n = 125):
 
     return all_data
 
+@njit
+def skewness_kurtosis(data: np.array):
+    # Calculate sum
+    sum_ = np.sum(data)
+
+    # Calculate mean
+    mean = np.mean(data)
+    
+    # Calculate standard deviation
+    std_dev = np.std(data)
+    
+    # Calculate skewness
+    skewness = np.mean((data - mean) ** 3) / (std_dev ** 3)
+    
+    # Calculate kurtosis
+    kurtosis = np.mean((data - mean) ** 4) / (std_dev ** 4) - 3
+    
+    return sum_, mean, std_dev, skewness, kurtosis
 
 @njit(parallel=True)
 def get_features(lob_data: np.array, 
@@ -264,7 +282,47 @@ def get_features(lob_data: np.array,
         lob_start = lob_end                                                  # indicies to the last end times / indicies
         tapes_start = tapes_end
 
-    return feat_arr, features
+    # =================================================
+    # calculate daily features
+    daily_arr = {}
+    # volume features
+    vt, vm, vs, vw, vk = skewness_kurtosis(tapes[:,2])
+
+    daily_arr["VOL_SUM"] = vt
+    daily_arr["VOL_MEAN"] = vm
+    daily_arr["VOL_STD"] = vs
+    daily_arr["VOL_SKEW"] = vw
+    daily_arr["VOL_KURT"] = vk
+
+    # price x volume features
+    price_x_vol = tapes[:,1] * tapes[:,2]
+    vt, vm, vs, vw, vk = skewness_kurtosis(price_x_vol)
+
+    daily_arr["VOL_SUM"] = vt
+    #daily_arr["PVOL_MEAN"] = vm
+    daily_arr["PVOL_STD"] = vs
+    daily_arr["PVOL_SKEW"] = vw
+    daily_arr["PVOL_KURT"] = vk
+
+    # price features
+    max_price = np.max(tapes[:,1])
+    min_price = np.min(tapes[:,1])
+
+    all_prices = np.zeros(int(daily_arr["VOL_SUM"]), dtype = np.int16)
+    counter = 0
+    for n, p in zip(tapes[:,1], tapes[:,2]):
+        for _ in range(n):
+            all_prices[counter] = p
+            counter += 1
+
+    vt, vm, vs, vw, vk = skewness_kurtosis(all_prices)
+
+    daily_arr["PRICE_DIFF"] = max_price - min_price
+    daily_arr["PRICE_STD"] = vs
+    daily_arr["PRICE_SKEW"] = vw
+    daily_arr["PRICE_KURT"] = vk
+
+    return feat_arr, features, daily_arr
 
 def load_data(time_step_s = 60, 
                  ab_weight = 1, 
@@ -283,8 +341,8 @@ def load_data(time_step_s = 60,
 
         s = time.time()
         lob, lob_time, tapes = readc_day(date) # variable names are reused so only required data is needed
-        feat_arr, features = get_features(lob, lob_time, tapes, time_step_s, ab_weight, median, cas_cbs_window)
-        output_data.append(feat_arr)
+        feat_arr, features, daily_arr = get_features(lob, lob_time, tapes, time_step_s, ab_weight, median, cas_cbs_window)
+        output_data.append((feat_arr, daily_arr))
         e = time.time()
 
     return output_data, features

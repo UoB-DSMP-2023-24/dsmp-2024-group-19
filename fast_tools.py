@@ -94,6 +94,8 @@ def get_features(lob_data: np.array,
         Whether to calculate features using median instead of mean, by default False.
     cas_cbs_window : int, optional
         Size of the window for calculating CAS and CBS, by default 800.
+    daily_data : bool, optional
+        Whether to calculate daily features, by default False.
 
     Returns:
     --------
@@ -101,10 +103,10 @@ def get_features(lob_data: np.array,
         A tuple containing:
         - feat_arr: np.array
             Array containing feature values.
-        - time_arr: np.array
-            Array containing timestamps.
         - features: list
             List of feature names.
+        - daily_arr: dict or None
+            Dictionary containing daily features or None if daily_data=False.
     """
     
     n_rows = int((8.5 * 60 * 60) / time_step_s)                         # define number of rows of output array
@@ -284,8 +286,8 @@ def get_features(lob_data: np.array,
         tapes_start = tapes_end
 
     # =================================================
+    # calculate daily features
     if daily_data:
-        # calculate daily features
         daily_arr = {}
         # volume features
         vt, vm, vs, vw, vk = skewness_kurtosis(tapes[:,2])
@@ -323,16 +325,18 @@ def get_features(lob_data: np.array,
         daily_arr["PRICE_STD"] = vs
         daily_arr["PRICE_SKEW"] = vw
         daily_arr["PRICE_KURT"] = vk
-        
+
     else:
         daily_arr = None
 
     return feat_arr, features, daily_arr
 
+
 def load_data(time_step_s = 60, 
                  ab_weight = 1, 
                  median = False, 
-                 cas_cbs_window = 800):
+                 cas_cbs_window = 800,
+                 daily_data = False):
     
     dates = get_dates()
     output_data = []
@@ -346,7 +350,7 @@ def load_data(time_step_s = 60,
 
         s = time.time()
         lob, lob_time, tapes = readc_day(date) # variable names are reused so only required data is needed
-        feat_arr, features, daily_arr = get_features(lob, lob_time, tapes, time_step_s, ab_weight, median, cas_cbs_window)
+        feat_arr, features, daily_arr = get_features(lob, lob_time, tapes, time_step_s, ab_weight, median, cas_cbs_window, daily_data)
         output_data.append((feat_arr, daily_arr))
         e = time.time()
 

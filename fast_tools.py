@@ -73,7 +73,8 @@ def get_features(lob_data: np.array,
                  time_step_s: int, 
                  ab_weight = 1, 
                  median = False, 
-                 cas_cbs_window = 800):
+                 cas_cbs_window = 800,
+                 daily_data = False):
     """
     Calculate features from LOB and Tapes data.
 
@@ -283,44 +284,48 @@ def get_features(lob_data: np.array,
         tapes_start = tapes_end
 
     # =================================================
-    # calculate daily features
-    daily_arr = {}
-    # volume features
-    vt, vm, vs, vw, vk = skewness_kurtosis(tapes[:,2])
+    if daily_data:
+        # calculate daily features
+        daily_arr = {}
+        # volume features
+        vt, vm, vs, vw, vk = skewness_kurtosis(tapes[:,2])
 
-    daily_arr["VOL_SUM"] = vt
-    daily_arr["VOL_MEAN"] = vm
-    daily_arr["VOL_STD"] = vs
-    daily_arr["VOL_SKEW"] = vw
-    daily_arr["VOL_KURT"] = vk
+        daily_arr["VOL_SUM"] = vt
+        daily_arr["VOL_MEAN"] = vm
+        daily_arr["VOL_STD"] = vs
+        daily_arr["VOL_SKEW"] = vw
+        daily_arr["VOL_KURT"] = vk
 
-    # price x volume features
-    price_x_vol = tapes[:,1] * tapes[:,2]
-    vt, vm, vs, vw, vk = skewness_kurtosis(price_x_vol)
+        # price x volume features
+        price_x_vol = tapes[:,1] * tapes[:,2]
+        vt, vm, vs, vw, vk = skewness_kurtosis(price_x_vol)
 
-    daily_arr["VOL_SUM"] = vt
-    #daily_arr["PVOL_MEAN"] = vm
-    daily_arr["PVOL_STD"] = vs
-    daily_arr["PVOL_SKEW"] = vw
-    daily_arr["PVOL_KURT"] = vk
+        daily_arr["VOL_SUM"] = vt
+        #daily_arr["PVOL_MEAN"] = vm
+        daily_arr["PVOL_STD"] = vs
+        daily_arr["PVOL_SKEW"] = vw
+        daily_arr["PVOL_KURT"] = vk
 
-    # price features
-    max_price = np.max(tapes[:,1])
-    min_price = np.min(tapes[:,1])
+        # price features
+        max_price = np.max(tapes[:,1])
+        min_price = np.min(tapes[:,1])
 
-    all_prices = np.zeros(int(daily_arr["VOL_SUM"]), dtype = np.int16)
-    counter = 0
-    for n, p in zip(tapes[:,1], tapes[:,2]):
-        for _ in range(n):
-            all_prices[counter] = p
-            counter += 1
+        all_prices = np.zeros(int(daily_arr["VOL_SUM"]), dtype = np.int16)
+        counter = 0
+        for n, p in zip(tapes[:,1], tapes[:,2]):
+            for _ in range(n):
+                all_prices[counter] = p
+                counter += 1
 
-    vt, vm, vs, vw, vk = skewness_kurtosis(all_prices)
+        vt, vm, vs, vw, vk = skewness_kurtosis(all_prices)
 
-    daily_arr["PRICE_DIFF"] = max_price - min_price
-    daily_arr["PRICE_STD"] = vs
-    daily_arr["PRICE_SKEW"] = vw
-    daily_arr["PRICE_KURT"] = vk
+        daily_arr["PRICE_DIFF"] = max_price - min_price
+        daily_arr["PRICE_STD"] = vs
+        daily_arr["PRICE_SKEW"] = vw
+        daily_arr["PRICE_KURT"] = vk
+        
+    else:
+        daily_arr = None
 
     return feat_arr, features, daily_arr
 

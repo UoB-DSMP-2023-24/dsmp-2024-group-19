@@ -10,3 +10,4 @@ keras
 tensorflow
 seaborn
 numba
+learntools

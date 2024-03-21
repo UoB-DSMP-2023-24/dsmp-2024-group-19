@@ -34,6 +34,11 @@ def readc_day(day: str):
     tapes = np.load(os.path.join(folder, "TAP_"+day+".npy"))
     return lob_data, lob_times, tapes
 
+def get_all_tapes():
+    folder = "CSR_Data"
+    dates = get_dates()
+    return [np.load(os.path.join(folder, "TAP_"+day+".npy")) for day in dates]
+
 def get_data(min_n = 0, max_n = 125):
     s = time.time()
     date_list = get_dates()

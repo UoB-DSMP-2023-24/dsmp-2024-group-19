@@ -48,9 +48,16 @@ def get_data(min_n = 0, max_n = 125):
         data = readc_day(day)
         all_data.append(data)
 
-    print("Time taken to reach each day:", (time.time() - s) / (max_n - min_n))
+    print("Time taken to read each day:", (time.time() - s) / (max_n - min_n))
 
     return all_data
+
+def get_data_gen(min_n = 0, max_n = 125):
+    date_list = get_dates()
+
+    for day in date_list[min_n:max_n]:
+        data = readc_day(day)
+        yield data
 
 @njit
 def skewness_kurtosis(data: np.array):

@@ -1,6 +1,9 @@
 Data
 Processed_Data
 final_merged_15s.csv
+final_merged_5s.csv
+final_merged_10s.csv
+final_merged_30s.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

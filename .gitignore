@@ -5,6 +5,11 @@ final_merged_5s.csv
 final_merged_10s.csv
 final_merged_30s.csv
 
+final_merged_15.csv
+final_merged_5.csv
+final_merged_10.csv
+final_merged_30.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -282,8 +282,8 @@ def move_to_parent_dir():
 
 def read_csr(n):
     filenames = os.listdir("CSR_Data")
-    csr_filenames = [f for f in filenames if "CSR" in f]
-    time_filenames = [f for f in filenames if "Timestamps" in f]
+    csr_filenames = [f for f in filenames if "CSR_LOB" in f]
+    time_filenames = [f for f in filenames if "TIM_LOB" in f]
 
     csr_filenames.sort()
     time_filenames.sort()
@@ -298,7 +298,7 @@ def read_csr(n):
             break
         # Load the CSR matrix from the .npz file
         lob = pd.DataFrame(load_npz(os.path.join("CSR_Data", csr_filenames[i])).toarray())
-        time = pd.read_csv(os.path.join("CSR_Data", time_filenames[i]), parse_dates=True, header=None)
+        time = load_npz(os.path.join("CSR_Data", time_filenames[i]))
         lob.index = time[list(time)[0]]
         lob.columns = lob.columns + 1
         
